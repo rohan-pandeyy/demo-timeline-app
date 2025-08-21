@@ -1,21 +1,57 @@
 // src/App.tsx
+import { useState, useEffect, useRef } from "react";
 import { mockApiResponse } from "./data/mockApiResponse";
 import { groupByYear } from "./utils/groupByYear";
 import { Timeline } from "./components/Timeline";
+import { Gallery } from "./components/Gallery";
 
 function App() {
   const yearCounts = groupByYear(mockApiResponse.images);
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+
+  const galleryRef = useRef<HTMLDivElement | null>(null);
+
+  // Scrollbar → Gallery
+  const handleYearSelect = (year: number) => {
+    const section = document.getElementById(`year-${year}`);
+    section?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  // Gallery → Scrollbar (observe sections in view)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find the section most in view
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+        if (visible.length > 0) {
+          const year = Number(visible[0].target.getAttribute("data-year"));
+          setSelectedYear(year);
+        }
+      },
+      { root: galleryRef.current, threshold: 0.6 }
+    );
+
+    // Observe each year section
+    const sections = document.querySelectorAll("[data-year]");
+    sections.forEach((s) => observer.observe(s));
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="flex">
-      {/* Gallery placeholder (will build later) */}
-      <div className="flex-1 p-6">
-        <h1 className="text-2xl font-bold">Demo Timeline App</h1>
-        <p className="mt-4">This is where the gallery will go…</p>
-      </div>
+      {/* Gallery (scrollable container) */}
+      <Gallery ref={galleryRef} images={mockApiResponse.images} />
 
-      {/* Timeline Scrollbar */}
-      <Timeline yearCounts={yearCounts} />
+      {/* Timeline with sync */}
+      <Timeline
+        yearCounts={yearCounts}
+        selectedYear={selectedYear}
+        onYearSelect={handleYearSelect}
+      />
     </div>
   );
 }

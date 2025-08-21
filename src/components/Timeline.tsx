@@ -1,13 +1,13 @@
-import { useState } from "react";
+// src/components/Timeline.tsx
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type TimelineProps = {
   yearCounts: Record<number, number>;
+  selectedYear: number | null;
+  onYearSelect?: (year: number) => void;
 };
 
-export function Timeline({ yearCounts }: TimelineProps) {
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
-
+export function Timeline({ yearCounts, selectedYear, onYearSelect }: TimelineProps) {
   const total = Object.values(yearCounts).reduce((a, b) => a + b, 0);
 
   return (
@@ -20,7 +20,7 @@ export function Timeline({ yearCounts }: TimelineProps) {
             <Tooltip key={year}>
               <TooltipTrigger asChild>
                 <div
-                  onClick={() => setSelectedYear(Number(year))}
+                  onClick={() => onYearSelect?.(Number(year))}
                   className={`cursor-pointer w-full transition-colors
                     ${selectedYear === Number(year) ? "bg-blue-500" : "bg-gray-400 hover:bg-gray-500"}
                   `}
