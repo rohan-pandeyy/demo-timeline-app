@@ -1,55 +1,66 @@
-// src/components/Gallery.tsx
-import { forwardRef } from "react";
-
-type Image = {
-  id: string;
-  date_created: string;
-};
+import React, { forwardRef } from "react";
+import { groupImagesByYearMonth, getYearCounts } from "../utils/groupImages";
+import type { Image } from "../utils/groupImages";
 
 type GalleryProps = {
   images: Image[];
+  onScroll: (event: React.UIEvent<HTMLDivElement>) => void;
 };
 
-export const Gallery = forwardRef<HTMLDivElement, GalleryProps>(
-  ({ images }, ref) => {
-    const groups: Record<number, Image[]> = {};
+const Gallery = forwardRef<HTMLDivElement, GalleryProps>(({ images, onScroll }, ref) => {
+  // Group images by year -> month -> images[]
+  const grouped = groupImagesByYearMonth(images);
+  const yearCounts = getYearCounts(grouped);
 
-    images.forEach((img) => {
-      const year = new Date(img.date_created).getFullYear();
-      if (!groups[year]) groups[year] = [];
-      groups[year].push(img);
-    });
+  return (
+    <div
+      ref={ref}
+      onScroll={onScroll}
+      className="overflow-y-scroll h-screen w-screen bg-gray-50"
+    >
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {Object.entries(grouped)
+          .sort((a, b) => Number(b[0]) - Number(a[0])) // Sort years descending
+          .map(([year, months]) => (
+            <div key={year} data-year={year} className="mb-8">
+              <h2 className="text-2xl font-bold mb-4 sticky top-0 bg-gray-50/80 backdrop-blur-sm py-2 z-10">
+                {year} ({yearCounts[Number(year)]})
+              </h2>
 
-    const sortedYears = Object.keys(groups)
-      .map((y) => Number(y))
-      .sort((a, b) => b - a);
-
-    return (
-      <div
-        ref={ref}
-        className="flex-1 overflow-y-auto h-screen p-6 space-y-12 scroll-smooth"
-      >
-        {sortedYears.map((year) => (
-          <div
-            key={year}
-            id={`year-${year}`}
-            data-year={year} // 👈 used by IntersectionObserver
-            className="space-y-4"
-          >
-            <h2 className="text-xl font-bold">{year}</h2>
-            <div className="grid grid-cols-1 gap-2">
-              {groups[year].map((img) => (
-                <div
-                  key={img.id}
-                  className="bg-gray-200 w-80 h-32 rounded flex items-center justify-center text-sm text-gray-600"
-                >
-                  {img.id}
-                </div>
-              ))}
+              {Object.entries(months)
+                .sort((a, b) => Number(b[0]) - Number(a[0])) // Sort months descending
+                .map(([month, imgs]) => (
+                  <div key={`${year}-${month}`} className="mb-6">
+                    <h3 className="text-xl font-semibold mb-2">
+                      {new Date(Number(year), Number(month) - 1).toLocaleString(
+                        "default",
+                        { month: "long" }
+                      )}
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                      {imgs.map((img) => (
+                        <div
+                          key={img.id}
+                          className="border rounded-lg p-2 text-center bg-white shadow-sm flex flex-col justify-center items-center"
+                        >
+                          <p className="text-sm text-gray-500">
+                            {img.date_created}
+                          </p>
+                          <span className="text-md font-medium">
+                            ID: {img.id}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
             </div>
-          </div>
-        ))}
+          ))}
       </div>
-    );
-  }
-);
+    </div>
+  );
+});
+
+Gallery.displayName = "Gallery";
+
+export default Gallery;

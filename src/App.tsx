@@ -1,59 +1,35 @@
-// src/App.tsx
-import { useState, useEffect, useRef } from "react";
-import { mockApiResponse } from "./data/mockApiResponse";
-import { groupByYear } from "./utils/groupByYear";
-import { Timeline } from "./components/Timeline";
-import { Gallery } from "./components/Gallery";
+import React, { useRef, useState, useCallback } from "react";
+import Gallery from "@/components/Gallery";
+import { mockImages } from "@/data/mockImages";
 
-function App() {
-  const yearCounts = groupByYear(mockApiResponse.images);
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+export default function App() {
+  const galleryRef = useRef<HTMLDivElement>(null);
+  
+  // needed to track the scroll progress for the scrollbar
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [currentYear, setCurrentYear] = useState("2025"); // 2025 is  initial year
 
-  const galleryRef = useRef<HTMLDivElement | null>(null);
+  const handleScroll = useCallback(() => {
+    if (!galleryRef.current) return;
 
-  // Scrollbar → Gallery
-  const handleYearSelect = (year: number) => {
-    const section = document.getElementById(`year-${year}`);
-    section?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+    const { scrollTop, scrollHeight, clientHeight } = galleryRef.current;
+    const maxScrollTop = scrollHeight - clientHeight;
 
-  // Gallery → Scrollbar (observe sections in view)
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Find the section most in view
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-
-        if (visible.length > 0) {
-          const year = Number(visible[0].target.getAttribute("data-year"));
-          setSelectedYear(year);
-        }
-      },
-      { root: galleryRef.current, threshold: 0.6 }
-    );
-
-    // Observe each year section
-    const sections = document.querySelectorAll("[data-year]");
-    sections.forEach((s) => observer.observe(s));
-
-    return () => observer.disconnect();
+    if (maxScrollTop > 0) {
+      const progress = scrollTop / maxScrollTop;
+      setScrollProgress(progress);
+      // Logic to update currentYear here
+    }
   }, []);
 
   return (
     <div className="flex">
-      {/* Gallery (scrollable container) */}
-      <Gallery ref={galleryRef} images={mockApiResponse.images} />
-
-      {/* Timeline with sync */}
-      <Timeline
-        yearCounts={yearCounts}
-        selectedYear={selectedYear}
-        onYearSelect={handleYearSelect}
+      <Gallery 
+        ref={galleryRef} 
+        images={mockImages} 
+        onScroll={handleScroll} 
       />
+      {/* scrollbar component here */}
     </div>
   );
 }
-
-export default App;

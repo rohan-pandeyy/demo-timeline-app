@@ -2,34 +2,41 @@ import { mockImages } from "../data/mockImages";
 
 export type Image = {
   id: string;
-  date_created: string; // ISO date string (eg: "2024-03-15")
+  date_created: string; // ISO based date string ie: "2024-03-15"
 };
 
-export function groupImagesByYear(images: Image[]): Record<number, Image[]> {
-  const groups: Record<number, Image[]> = {};
+export function groupImagesByYearMonth(
+  images: Image[]
+): Record<number, Record<number, Image[]>> {
+  return images.reduce((acc, img) => {
+    const date = new Date(img.date_created);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // 0 means jan
 
-  images.forEach((img) => {
-    const year = new Date(img.date_created).getFullYear();
-    if (!groups[year]) groups[year] = [];
-    groups[year].push(img);
-  });
+    if (!acc[year]) acc[year] = {};
+    if (!acc[year][month]) acc[year][month] = [];
 
-  // Sort by year in descending order
-  const sorted = Object.fromEntries(
-    Object.entries(groups).sort(([a], [b]) => Number(b) - Number(a))
-  );
-
-  return sorted;
+    acc[year][month].push(img);
+    return acc;
+  }, {} as Record<number, Record<number, Image[]>>);
 }
 
-export function getYearCounts(groups: Record<number, Image[]>): Record<number, number> {
+
+export function getYearCounts(
+  groups: Record<number, Record<number, Image[]>>
+): Record<number, number> {
   return Object.fromEntries(
-    Object.entries(groups).map(([year, imgs]) => [Number(year), imgs.length])
+    Object.entries(groups).map(([year, months]) => {
+      const total = Object.values(months).reduce(
+        (count, imgs) => count + imgs.length,
+        0
+      );
+      return [Number(year), total];
+    })
   );
 }
 
-// Run grouping and counts
-const grouped = groupImagesByYear(mockImages);
+const grouped = groupImagesByYearMonth(mockImages);
 const yearCounts = getYearCounts(grouped);
 
 console.log("Grouped Images:", grouped);
