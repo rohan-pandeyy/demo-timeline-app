@@ -24,7 +24,7 @@ const Gallery = forwardRef<HTMLDivElement, GalleryProps>(({ images, onScroll, cl
           .sort((a, b) => Number(b[0]) - Number(a[0])) // Sort years descending
           .map(([year, months]) => (
             <div key={year} data-year={year} className="mb-8">
-              <h2 className="text-2xl font-bold mb-4 sticky top-0 bg-gray-50/80 backdrop-blur-sm py-2 z-10">
+              <h2 className="text-2xl font-bold mb-4 py-2">
                 {year} ({yearCounts[Number(year)]})
               </h2>
 
@@ -32,11 +32,11 @@ const Gallery = forwardRef<HTMLDivElement, GalleryProps>(({ images, onScroll, cl
                 .sort((a, b) => Number(b[0]) - Number(a[0])) // Sort months descending
                 .map(([month, imgs]) => (
                   <div key={`${year}-${month}`} data-year={year} data-month={month} className="mb-6">
-                    <h3 className="text-xl font-semibold mb-2">
-                      {new Date(Number(year), Number(month) - 1).toLocaleString(
-                      "default",
-                      { month: "long" }
-                      )}
+                    <h3 className="text-xl font-semibold mb-2 sticky top-0 bg-gray-50/80 backdrop-blur-sm py-2 z-10">
+                      {`${new Date(Number(year), Number(month) - 1).toLocaleString(
+                        "default",
+                        { month: "long" }
+                      )} ${year}`}
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                       {imgs.map((img) => (

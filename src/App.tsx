@@ -13,7 +13,6 @@ export default function App() {
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-
   const handleScroll = useCallback(() => {
     const container = galleryRef.current;
     if (!container) return;
@@ -56,9 +55,33 @@ export default function App() {
 
       setCurrentYear(`${monthName} ${year}`);
     }
-
-    // console.log({ scrollTop, scrollHeight, clientHeight, maxScrollTop });
   }, []);
+
+  // map month year label on scroll 
+  const getLabelFromProgress = (progress: number): string => {
+    const container = galleryRef.current;
+    if (!container) return "";
+    const { scrollHeight, clientHeight } = container;
+    const targetScroll = progress * (scrollHeight - clientHeight);
+
+    const monthSections = container.querySelectorAll<HTMLDivElement>(
+      "[data-year][data-month]"
+    );
+    let label = "";
+    monthSections.forEach((section) => {
+      if (section.offsetTop <= targetScroll + 20) {
+        const year = section.getAttribute("data-year") ?? "";
+        const month = section.getAttribute("data-month") ?? "";
+        const monthName = new Date(
+          Number(year),
+          Number(month) - 1
+        ).toLocaleString("default", { month: "long" });
+        label = `${monthName} ${year}`;
+      }
+    });
+
+    return label;
+  };
 
   React.useEffect(() => {
     return () => {
@@ -80,6 +103,7 @@ export default function App() {
               galleryRef.current.scrollTop = p * (scrollHeight - clientHeight);
             }
           }}
+          onHoverScroll={getLabelFromProgress}
         />
       </div>
     </div>

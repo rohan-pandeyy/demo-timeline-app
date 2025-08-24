@@ -6,6 +6,7 @@ interface TimelineProps {
   currentYear: string;
   showTooltip: boolean;
   onDragScroll: (progress: number) => void;
+  onHoverScroll?: (progress: number) => string;
 }
 
 export default function Timeline({
@@ -13,8 +14,11 @@ export default function Timeline({
   currentYear,
   showTooltip,
   onDragScroll,
+  onHoverScroll,
 }: TimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [hoverProgress, setHoverProgress] = useState<number | null>(null);
+  const [hoverLabel, setHoverLabel] = useState<string | null>(null);
   const [containerHeight, setContainerHeight] = useState(0);
   const y = useMotionValue(0);
 
@@ -52,12 +56,44 @@ export default function Timeline({
     onDragScroll(clamped);
   }
 
+  function getProgressFromEvent(e: React.MouseEvent) {
+    if (!containerRef.current) return 0;
+    const rect = containerRef.current.getBoundingClientRect();
+    const offset = e.clientY - rect.top;
+    return Math.min(Math.max(offset / rect.height, 0), 1);
+  }
+
   return (
     <div
       ref={containerRef}
       className="relative h-full w-10 flex items-start justify-center"
+      onMouseMove={(e) => {
+        const p = getProgressFromEvent(e);
+        setHoverProgress(p);
+        if (onHoverScroll) {
+          const label = onHoverScroll(p);
+          setHoverLabel(label);
+        }
+      }}
+      onMouseLeave={() => {
+        setHoverProgress(null);
+        setHoverLabel(null);
+      }}
+      onClick={(e) => {
+        const p = getProgressFromEvent(e);
+        onDragScroll(p);
+      }}
     >
       <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-1 bg-gray-200 rounded" />
+
+      {hoverProgress !== null && hoverLabel && (
+        <div
+          className="absolute right-full mr-2 px-2 py-1 rounded bg-black text-white text-xs whitespace-nowrap pointer-events-none"
+          style={{ top: `${hoverProgress * 100}%`, transform: "translateY(-50%)" }}
+        >
+          {hoverLabel}
+        </div>
+      )}
 
       <motion.div
         drag="y"
