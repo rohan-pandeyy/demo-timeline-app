@@ -26,6 +26,8 @@ export default function Timeline({
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoverProgress, setHoverProgress] = useState<number | null>(null);
   const [hoverLabel, setHoverLabel] = useState<string | null>(null);
+  const [isThumbHovered, setIsThumbHovered] = useState(false);
+  const [isDraggingThumb, setIsDraggingThumb] = useState(false);
   const [containerHeight, setContainerHeight] = useState(0);
   const y = useMotionValue(0);
 
@@ -69,11 +71,14 @@ export default function Timeline({
     return Math.min(Math.max(offset / rect.height, 0), 1);
   }
 
+  const suppressHover = isThumbHovered || isDraggingThumb;
+
   return (
     <div
       ref={containerRef}
       className="relative h-full w-10 flex items-start justify-center"
       onMouseMove={(e) => {
+        if (suppressHover) return; // skip hover updates
         const p = getProgressFromEvent(e);
         setHoverProgress(p);
         if (onHoverScroll) setHoverLabel(onHoverScroll(p));
@@ -87,10 +92,10 @@ export default function Timeline({
         onDragScroll(p);
       }}
     >
-      {/* Vertical timeline line */}
+      {/* Timeline line */}
       <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-1 bg-gray-200 rounded" />
 
-      {/* Markers */}
+      {/* Month markers */}
       {markers.map((m, idx) => (
         <div
           key={idx}
@@ -100,8 +105,8 @@ export default function Timeline({
         />
       ))}
 
-      {/* Hover tooltip */}
-      {hoverProgress !== null && hoverLabel && (
+      {/* Hover tooltip (hidden if thumb hovered or dragging) */}
+      {!suppressHover && hoverProgress !== null && hoverLabel && (
         <div
           className="absolute right-full mr-2 px-2 py-1 rounded bg-black text-white text-xs whitespace-nowrap pointer-events-none"
           style={{ top: `${hoverProgress * 100}%`, transform: "translateY(-50%)" }}
@@ -110,11 +115,15 @@ export default function Timeline({
         </div>
       )}
 
-      {/* Draggable knob */}
+      {/* Draggable thumb */}
       <motion.div
         drag="y"
         dragConstraints={containerRef}
         onDrag={handleDrag}
+        onDragStart={() => setIsDraggingThumb(true)}
+        onDragEnd={() => setIsDraggingThumb(false)}
+        onMouseEnter={() => setIsThumbHovered(true)}
+        onMouseLeave={() => setIsThumbHovered(false)}
         style={{
           y,
           position: "absolute",
