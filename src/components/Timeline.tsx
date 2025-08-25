@@ -94,7 +94,7 @@ export default function Timeline({
       {markers.map((m, idx) => (
         <div
           key={idx}
-          className="absolute left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-gray-00 shadow-sm"
+          className="absolute left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-gray-500 shadow-sm"
           style={{ top: `${m.progress * 100}%` }}
           title={m.label}
         />
