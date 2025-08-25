@@ -42,7 +42,7 @@ const Gallery = forwardRef<HTMLDivElement, GalleryProps>(({ images, onScroll, cl
                       {imgs.map((img) => (
                         <div
                           key={img.id}
-                          className="border rounded-lg p-2 text-center bg-white shadow-sm flex flex-col justify-center items-center"
+                          className="border rounded-lg p-2 text-center h-32 bg-white shadow-sm flex flex-col justify-center items-center"
                         >
                           <p className="text-sm text-gray-500">
                             {img.date_created}

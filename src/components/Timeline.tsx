@@ -1,10 +1,16 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { motion, useMotionValue } from "framer-motion";
 
+interface Marker {
+  progress: number;
+  label: string;
+}
+
 interface TimelineProps {
   scrollProgress: number;
   currentYear: string;
   showTooltip: boolean;
+  markers?: Marker[];
   onDragScroll: (progress: number) => void;
   onHoverScroll?: (progress: number) => string;
 }
@@ -13,6 +19,7 @@ export default function Timeline({
   scrollProgress,
   currentYear,
   showTooltip,
+  markers = [],
   onDragScroll,
   onHoverScroll,
 }: TimelineProps) {
@@ -29,7 +36,6 @@ export default function Timeline({
       }
     };
     measure();
-
     const ro = new ResizeObserver(measure);
     if (containerRef.current) ro.observe(containerRef.current);
     window.addEventListener("resize", measure);
@@ -70,10 +76,7 @@ export default function Timeline({
       onMouseMove={(e) => {
         const p = getProgressFromEvent(e);
         setHoverProgress(p);
-        if (onHoverScroll) {
-          const label = onHoverScroll(p);
-          setHoverLabel(label);
-        }
+        if (onHoverScroll) setHoverLabel(onHoverScroll(p));
       }}
       onMouseLeave={() => {
         setHoverProgress(null);
@@ -84,8 +87,20 @@ export default function Timeline({
         onDragScroll(p);
       }}
     >
+      {/* Vertical timeline line */}
       <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-1 bg-gray-200 rounded" />
 
+      {/* Markers */}
+      {markers.map((m, idx) => (
+        <div
+          key={idx}
+          className="absolute left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-gray-00 shadow-sm"
+          style={{ top: `${m.progress * 100}%` }}
+          title={m.label}
+        />
+      ))}
+
+      {/* Hover tooltip */}
       {hoverProgress !== null && hoverLabel && (
         <div
           className="absolute right-full mr-2 px-2 py-1 rounded bg-black text-white text-xs whitespace-nowrap pointer-events-none"
@@ -95,6 +110,7 @@ export default function Timeline({
         </div>
       )}
 
+      {/* Draggable knob */}
       <motion.div
         drag="y"
         dragConstraints={containerRef}
@@ -104,7 +120,6 @@ export default function Timeline({
           position: "absolute",
           left: "50%",
           translateX: "-50%",
-          translateY: "0%",
         }}
         className="group w-3 h-3 bg-blue-500 rounded-full shadow-lg cursor-grab"
         whileHover={{ scale: 1.2 }}
